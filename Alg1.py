@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 # Генерация случайного глобального IP адреса
 def generate_ip():
-    return f"{random.randint(1, 255)}.{random.randint(1, 255)}.{random.randint(1, 255)}.{random.randint(1, 255)}"
+    return f"192.104.{random.randint(1, 255)}.{random.randint(1, 255)}"
 
 
 # Словарь платформ
@@ -42,8 +42,8 @@ def generate_date():
 
 # Генерация данных для датасета, учитывая сезон
 data = []
-for _ in range(50000):
-    user = f"example{random.randint(1000, 9999)}@mail.ru"
+for i in range(50000):
+    user = [f"example_{random.randint(1,9)}{i // 10}@mail.ru"]
     ip_address = generate_ip()
     platform = random.choice(platforms)
     date = generate_date()
@@ -72,7 +72,7 @@ df = pd.DataFrame(data, columns=['Пользователь', 'IP адрес', '�
                                  'Время просмотра рекламы (мин)', 'Вид рекламы'])
 
 # Сохранение в Excel файл с указанием полного пути
-df.to_excel('C:\\Users\\kl\\Desktop\\Algoritmy\\1 лаба\\dataset.xlsx', index=False)
+df.to_excel('C:\\Users\\kl\\Desktop\\Algorithm\\1 lab\\dataset.xlsx', index=False)
 
 
 print("Датасет создан и сохранен в файл 'dataset.xlsx'")
