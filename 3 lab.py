@@ -4,16 +4,19 @@ import pandas as pd
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
+
 def hash_phone(phone, salt):
     sha1_hash = hashlib.sha1((str(phone) + salt).encode()).hexdigest()
     md5_hash = hashlib.md5((str(phone) + salt).encode()).hexdigest()
     sha256_hash = hashlib.sha3_256((str(phone) + salt).encode()).hexdigest()
     return sha1_hash, md5_hash, sha256_hash
 
+
 def save_hashes(filename, hashes):
     with open(filename, 'a') as file:
         for h in hashes:
             file.write(h + '\n')
+
 
 def main():
     root = tk.Tk()
@@ -89,13 +92,13 @@ def main():
             return
         if algorithm == "sha1":
             sha1(phones)
-            messagebox.showinfo("Готово", "Результат сохранен в файле output_sha1.")
+            messagebox.showinfo("Готово", "Результат сохранен в файле sha1.")
         elif algorithm == "sha256":
             sha256(phones)
-            messagebox.showinfo("Готово", "Результат сохранен в файле output_sha256.")
+            messagebox.showinfo("Готово", "Результат сохранен в файле sha256.")
         else:
             sha512(phones)
-            messagebox.showinfo("Готово", "Результат сохранен в файле output_sha512.")
+            messagebox.showinfo("Готово", "Результат сохранен в файле sha512.")
 
     def sha1(phones):
         phones_sha1 = [hashlib.sha1(phone.encode()).hexdigest() for phone in phones]
@@ -122,8 +125,8 @@ def main():
     label_salt_type = tk.Label(root, text="Выберите тип соли:")
 
     button_load = tk.Button(root, text="Загрузить файл", command=load_file)
-    button_deidentify = tk.Button(root, text="Деобезличить", command=identify, state=tk.DISABLED)
-    button_compute_salt = tk.Button(root, text="Вычислить соль", command=find_salt)
+    button_deidentify = tk.Button(root, text="Деанонимизировать", command=identify, state=tk.DISABLED)
+    button_compute_salt = tk.Button(root, text="Вычислить 'соль'", command=find_salt)
 
     button_encrypt_sha1 = tk.Button(root, text="Зашифровать SHA-1", command=lambda: encrypt("sha1"))
     button_encrypt_sha256 = tk.Button(root, text="Зашифровать SHA-256", command=lambda: encrypt("sha256"))
@@ -149,6 +152,7 @@ def main():
     radio_mixed.grid(row=3, column=2, padx=10, pady=5, sticky="w")
 
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()
