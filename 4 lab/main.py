@@ -5,6 +5,17 @@ from tkinter import ttk
 
 class GeneticAlgorithm:
     def __init__(self, num_generations, population_size, mutation_rate, encoding_type, lower_bound, upper_bound):
+        """
+        Инициализация генетического алгоритма с заданными параметрами.
+
+        Параметры:
+        - num_generations: Количество поколений в алгоритме.
+        - population_size: Количество индивидуумов в каждом поколении.
+        - mutation_rate: Вероятность мутации для каждого гена.
+        - encoding_type: Тип кодирования, 'real' или 'logarithmic'.
+        - lower_bound: Нижняя граница значений генов.
+        - upper_bound: Верхняя граница значений генов.
+        """
         self.num_generations = num_generations
         self.population_size = population_size
         self.mutation_rate = mutation_rate
@@ -14,32 +25,84 @@ class GeneticAlgorithm:
         self.population = self.initialize_population()
 
     def evaluate_fitness(self, x, y):
+        """
+        Оценка приспособленности индивида на основе заданной функции.
+
+        Параметры:
+        - x, y: Гены, представляющие координаты индивида.
+
+        Возвращает:
+        - Значение приспособленности, рассчитанное с использованием указанной функции.
+        """
         return 2 * (x ** 3) + 4 * x * (y ** 3) - 10 * x * y + (y ** 2)
 
     def initialize_population(self):
+        """
+        Инициализация популяции случайными индивидуумами.
+
+        Возвращает:
+        - Двумерный массив, представляющий начальную популяцию.
+        """
         if self.encoding_type == 'real':
             return np.random.uniform(self.lower_bound, self.upper_bound, size=(self.population_size, 2))
         else:
             return np.random.uniform(0, 1, size=(self.population_size, 2))
 
     def enforce_bounds(self, individual):
+        """
+        Приведение значений генов к указанным границам.
+
+        Параметры:
+        - individual: Массив, представляющий гены индивида.
+
+        Возвращает:
+        - Гены со значениями в указанных границах.
+        """
         if self.encoding_type == 'real':
             return np.maximum(np.minimum(individual, self.upper_bound), self.lower_bound)
         else:
             return np.maximum(np.minimum(individual, 1), 0)
 
     def crossover(self, parent1, parent2):
+        """
+        Одноточечное скрещивание между двумя родителями.
+
+        Параметры:
+        - parent1, parent2: Массивы, представляющие гены двух родителей.
+
+        Возвращает:
+        - Два массива, представляющих гены двух потомков после скрещивания.
+        """
         crossover_point = np.random.randint(1, len(parent1))
         child1 = np.concatenate((parent1[:crossover_point], parent2[crossover_point:]))
         child2 = np.concatenate((parent2[:crossover_point], parent1[crossover_point:]))
         return child1, child2
 
     def mutate(self, individual):
+        """
+        Внесение мутаций в гены индивида.
+
+        Параметры:
+        - individual: Массив, представляющий гены индивида.
+
+        Возвращает:
+        - Мутированные гены со значениями в указанных границах.
+        """
         mutation_mask = np.random.rand(*individual.shape) < self.mutation_rate
         individual[mutation_mask] = np.random.randn(*individual.shape)[mutation_mask]
         return self.enforce_bounds(individual)
 
     def select_parents(self, population, fitness_values):
+        """
+        Выбор родителя с использованием турнирного отбора.
+
+        Параметры:
+        - population: Двумерный массив, представляющий текущую популяцию.
+        - fitness_values: Массив значений приспособленности для каждого индивида.
+
+        Возвращает:
+        - Гены выбранного родителя.
+        """
         tournament_size = 3
         indices = np.random.choice(len(population), tournament_size, replace=False)
         tournament_fitness = fitness_values[indices]
@@ -47,11 +110,13 @@ class GeneticAlgorithm:
         return population[parent_index]
 
 
+# Функция для очистки и установки значений в элементе Entry
 def clear_entry(entry, value):
     entry.delete(0, tk.END)
     entry.insert(0, value)
 
 
+# Функция для обновления виджета Treeview новыми данными
 def update_table(data):
     for row in tree.get_children():
         tree.delete(row)
@@ -59,26 +124,34 @@ def update_table(data):
         tree.insert("", "end", values=row_data)
 
 
+# Функция для запуска генетического алгоритма и обновления пользовательского интерфейса
 def run_genetic_algorithm(encoding_type):
+    # Извлечение параметров из элементов пользовательского интерфейса
     mutation_rate = float(probability_entry.get()) / 100.0
     population_size = int(chromosome_count_entry.get())
     num_generations = int(iteration_count_entry.get())
     lower_bound = float(min_gene_entry.get())
     upper_bound = float(max_gene_entry.get())
 
+    # Инициализация генетического алгоритма
     genetic_algorithm = GeneticAlgorithm(num_generations, population_size, mutation_rate, encoding_type, lower_bound,
                                          upper_bound)
     generations_data = []
 
+    # Основной цикл для каждого поколения
     for generation in range(num_generations):
+        # Оценка приспособленности для каждого индивида в популяции
         fitness_values = np.apply_along_axis(lambda x: genetic_algorithm.evaluate_fitness(x[0], x[1]), 1,
                                              genetic_algorithm.population)
 
+        # Сортировка популяции по значениям приспособленности
         sorted_indices = np.argsort(fitness_values)
         genetic_algorithm.population = genetic_algorithm.population[sorted_indices]
 
+        # Выбор верхней половины популяции на основе приспособленности
         selected_population = genetic_algorithm.population[:genetic_algorithm.population_size // 2]
 
+        # Создание новой популяции через скрещивание и мутацию
         new_population = []
         for i in range(genetic_algorithm.population_size // 2):
             parent1 = genetic_algorithm.select_parents(selected_population, fitness_values)
@@ -88,13 +161,18 @@ def run_genetic_algorithm(encoding_type):
             child2 = genetic_algorithm.mutate(child2)
             new_population.extend([child1, child2])
 
+        # Замена старой популяции новой
         genetic_algorithm.population = np.array(new_population)
+
+        # Извлечение данных о лучшем индивиде в текущем поколении
         best_individual = genetic_algorithm.population[0]
         best_individual = genetic_algorithm.enforce_bounds(best_individual)
         best_fitness = genetic_algorithm.evaluate_fitness(best_individual[0], best_individual[1])
 
+        # Сохранение данных о поколении
         generations_data.append((generation + 1, best_fitness, best_individual[0], best_individual[1]))
 
+    # Формирование текста для вывода в Canvas на основе типа кодирования
     if encoding_type == 'logarithmic':
         x_log = lower_bound * 10 ** (best_individual[0] * np.log10(1 + upper_bound / max(lower_bound, 1e-10)))
         y_log = lower_bound * 10 ** (best_individual[1] * np.log10(1 + upper_bound / max(lower_bound, 1e-10)))
@@ -104,6 +182,7 @@ def run_genetic_algorithm(encoding_type):
         coord_text = f"Координаты точки: ({best_individual[0]:.4f}, {best_individual[1]:.4f})"
         fitness_text = f"Функция: {best_fitness:.4f}"
 
+    # Обновление элемента Canvas данными о лучшем индивиде и его приспособленности
     result_canvas.delete("all")
     result_canvas.itemconfig(result_canvas.create_text(197, 10, text=coord_text, font=("Arial", 10)),
                              tags="result_text_coord")
@@ -112,11 +191,12 @@ def run_genetic_algorithm(encoding_type):
     update_table(generations_data)
 
 
+# Создание основного окна Tkinter
 root = tk.Tk()
 root.title("Генетический алгоритм для поиска минимума функции")
 root.geometry('1000x600')
 
-# Создаем холст для отображения графики
+# Создание Canvas для отображения графики
 canvas = tk.Canvas(root, width=1000, height=1000, borderwidth=0, highlightthickness=0)
 canvas.place(relx=0, rely=0.0)
 
@@ -199,7 +279,6 @@ button_10 = tk.Button(frame_control, text="10", width=8,
                       command=lambda: clear_entry(iteration_count_entry, 10),
                       bg="#DDDDDD", activebackground="#CCCCCC", relief=tk.GROOVE)
 button_10.place(relx=0.27, rely=0.40)
-
 
 button_100 = tk.Button(frame_control, text="100", width=8,
                        command=lambda: clear_entry(iteration_count_entry, 100),
